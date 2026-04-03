@@ -2,9 +2,10 @@
 
 Cleans up raw extraction masks by:
   1. Removing large solid fill regions that aren't outlines
-  2. Closing small gaps in outlines (morphological CLOSE)
-  3. Removing isolated noise blobs below a minimum area
-  4. Smoothing jagged edges with a light Gaussian pass + re-threshold
+  2. Closing small gaps in outlines (multi-pass morphological approach)
+  3. Bridging nearby contour endpoints to seal larger gaps
+  4. Removing isolated noise blobs below a minimum area
+  5. Smoothing jagged edges with a light Gaussian pass + re-threshold
 """
 
 import cv2
@@ -74,6 +75,73 @@ def _remove_fill_regions(mask: np.ndarray, max_fill_ratio: float = 0.02) -> np.n
     return result
 
 
+def _bridge_contour_gaps(mask: np.ndarray, max_gap: int = 10) -> np.ndarray:
+    """Bridge small gaps between nearby contour endpoints.
+
+    Finds line endpoints (pixels with only one neighbor) and connects pairs
+    that are within max_gap pixels of each other.  This seals gaps that
+    morphological CLOSE alone cannot handle without over-thickening lines.
+
+    Inspired by the "trapped-ball" concept from cartoon segmentation research
+    (Zhang et al., IEEE TVCG 2009) — regions where a ball gets trapped become
+    fillable segments.  This is a lightweight approximation: instead of
+    simulating ball physics, we directly connect nearby endpoints.
+
+    Args:
+        mask: Binary mask (uint8) where 255 = outline pixel.
+        max_gap: Maximum distance in pixels between endpoints to bridge.
+
+    Returns:
+        Mask with gaps bridged by drawn lines.
+    """
+    # Find endpoints using hit-or-miss with endpoint kernels.
+    # An endpoint is a foreground pixel with exactly one foreground neighbor.
+    # We use a thinned version to find true endpoints.
+    thinned = cv2.ximgproc.thinning(mask) if hasattr(cv2, 'ximgproc') else mask
+
+    # Count neighbors for each foreground pixel
+    kernel = np.ones((3, 3), dtype=np.uint8)
+    kernel[1, 1] = 0
+    neighbor_count = cv2.filter2D((thinned > 0).astype(np.uint8), -1, kernel)
+
+    # Endpoints: foreground pixels with exactly 1 neighbor
+    endpoints = (thinned > 0) & (neighbor_count == 1)
+    ey, ex = np.where(endpoints)
+
+    if len(ey) < 2:
+        return mask
+
+    result = mask.copy()
+
+    # For each endpoint, find the nearest other endpoint within max_gap
+    # and draw a line between them (greedy matching).
+    coords = np.column_stack((ex, ey))
+    used = set()
+
+    for i in range(len(coords)):
+        if i in used:
+            continue
+        pt1 = coords[i]
+        best_j = -1
+        best_dist = max_gap + 1
+
+        for j in range(i + 1, len(coords)):
+            if j in used:
+                continue
+            dist = np.sqrt((coords[j][0] - pt1[0]) ** 2 + (coords[j][1] - pt1[1]) ** 2)
+            if dist < best_dist:
+                best_dist = dist
+                best_j = j
+
+        if best_j >= 0 and best_dist <= max_gap:
+            pt2 = coords[best_j]
+            cv2.line(result, tuple(pt1), tuple(pt2), 255, 1)
+            used.add(i)
+            used.add(best_j)
+
+    return result
+
+
 def clean(
     mask: np.ndarray,
     close_kernel_size: int = 3,
@@ -81,6 +149,8 @@ def clean(
     smooth: bool = True,
     remove_fills: bool = True,
     max_fill_ratio: float = 0.02,
+    bridge_gaps: bool = True,
+    max_gap: int = 10,
 ) -> np.ndarray:
     """Clean a binary extraction mask for use as a coloring template.
 
@@ -98,6 +168,9 @@ def clean(
                       their boundary outlines. Fixes dark ears/hair being solid black.
         max_fill_ratio: Maximum ratio of image area for a single connected component
                         before it's treated as a fill region. Default 0.02 (2%).
+        bridge_gaps: If True, connect nearby contour endpoints to seal gaps that
+                     morphological CLOSE cannot reach without over-thickening.
+        max_gap: Maximum pixel distance between endpoints to bridge (default 10).
 
     Returns:
         Cleaned binary mask (uint8), same shape as input.
@@ -107,12 +180,22 @@ def clean(
         mask = _remove_fill_regions(mask, max_fill_ratio=max_fill_ratio)
 
     # 2. Morphological CLOSE: seal small gaps in outlines
+    #    Use a two-pass approach: first a small kernel for tight gaps,
+    #    then the user-specified kernel for broader sealing.
+    if close_kernel_size >= 3:
+        small_kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, small_kernel)
+
     kernel = cv2.getStructuringElement(
         cv2.MORPH_ELLIPSE, (close_kernel_size, close_kernel_size)
     )
     closed = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
-    # 3. Remove noise blobs smaller than min_component_area
+    # 3. Bridge larger gaps by connecting nearby contour endpoints
+    if bridge_gaps:
+        closed = _bridge_contour_gaps(closed, max_gap=max_gap)
+
+    # 4. Remove noise blobs smaller than min_component_area
     if min_component_area is None:
         total_pixels = mask.shape[0] * mask.shape[1]
         min_component_area = max(30, int(total_pixels * 0.000005))
@@ -123,7 +206,7 @@ def clean(
         if stats[i, cv2.CC_STAT_AREA] >= min_component_area:
             cleaned[labels == i] = 255
 
-    # 4. Light Gaussian blur + re-threshold to smooth jagged edges
+    # 5. Light Gaussian blur + re-threshold to smooth jagged edges
     if smooth:
         blurred = cv2.GaussianBlur(cleaned, (3, 3), 0.8)
         _, cleaned = cv2.threshold(blurred, 128, 255, cv2.THRESH_BINARY)

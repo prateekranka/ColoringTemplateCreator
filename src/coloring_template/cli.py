@@ -58,7 +58,9 @@ def build_parser() -> argparse.ArgumentParser:
             "  dark     - Direct dark-pixel extraction, best for bold black outlines\n"
             "  edge     - Adaptive threshold, best for colored/light outlines\n"
             "  canny    - Canny edge detection with bilateral filter\n"
-            "  combined - Merges dark and edge results"
+            "  combined - Merges dark and edge results\n"
+            "  kmeans   - K-means color segmentation, guarantees closed contours\n"
+            "  xdog     - Extended Difference of Gaussians, hand-drawn look"
         ),
     )
     parser.add_argument(
@@ -113,6 +115,17 @@ def build_parser() -> argparse.ArgumentParser:
         dest="smooth",
         help="Disable edge smoothing (keep raw binary edges).",
     )
+    parser.add_argument(
+        "--max-gap",
+        type=int,
+        default=10,
+        metavar="PX",
+        dest="max_gap",
+        help=(
+            "Maximum pixel distance to bridge between contour endpoints (default: 10). "
+            "Seals gaps that morphological close cannot reach. Set to 0 to disable."
+        ),
+    )
 
     return parser
 
@@ -154,6 +167,7 @@ def main(argv: list[str] | None = None) -> int:
         transparent=args.transparent,
         min_size=args.min_size,
         preview=args.preview,
+        max_gap=args.max_gap,
     )
 
     if len(inputs) == 1:

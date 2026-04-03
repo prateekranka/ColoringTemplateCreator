@@ -11,7 +11,13 @@ import cv2
 import numpy as np
 from pathlib import Path
 
-from .strategies import DarkPixelStrategy, EdgeDetectStrategy, CombinedStrategy
+from .strategies import (
+    DarkPixelStrategy,
+    EdgeDetectStrategy,
+    CombinedStrategy,
+    KMeansSegmentStrategy,
+    XDoGStrategy,
+)
 from .cleanup import clean
 from .output import save, save_preview
 
@@ -20,15 +26,52 @@ from .output import save, save_preview
 # Auto-strategy selection
 # ---------------------------------------------------------------------------
 
+def _count_distinct_colors(img_rgb: np.ndarray, sample_size: int = 50000) -> int:
+    """Estimate the number of distinct color clusters in an image.
+
+    Uses a quick mini-K-means on a random pixel sample to measure how well
+    a small number of clusters explains the image.  Returns the estimated
+    number of visually distinct color regions.
+    """
+    h, w = img_rgb.shape[:2]
+    total = h * w
+
+    # Sample pixels for speed
+    if total > sample_size:
+        indices = np.random.default_rng(42).choice(total, sample_size, replace=False)
+        pixels = img_rgb.reshape(-1, 3)[indices].astype(np.float32)
+    else:
+        pixels = img_rgb.reshape(-1, 3).astype(np.float32)
+
+    # Try K=4 and K=12 — if K=4 already explains the image well (low
+    # compactness), the image has few distinct colors (flat palette).
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 2.0)
+    compactness_4, _, _ = cv2.kmeans(
+        pixels, 4, None, criteria, attempts=2, flags=cv2.KMEANS_PP_CENTERS
+    )
+    compactness_12, _, _ = cv2.kmeans(
+        pixels, 12, None, criteria, attempts=2, flags=cv2.KMEANS_PP_CENTERS
+    )
+
+    # Ratio: if doubling K doesn't help much, the image is already flat
+    ratio = compactness_4 / max(compactness_12, 1e-6)
+    # ratio < 2 means 4 clusters already capture most variance → flat palette
+    # ratio > 4 means lots more structure at higher K → complex/photographic
+    return ratio
+
+
 def select_strategy(img_rgb: np.ndarray, threshold: int = 60):
     """Analyse image statistics to choose the best extraction strategy.
 
-    Heuristic:
-      - If >2% of pixels are dark AND desaturated → strong black outlines present
-        → use DarkPixelStrategy (fastest, cleanest for pop art)
-      - If dark pixels exist but are concentrated in large blobs (fills, not outlines)
-        → use EdgeDetectStrategy (dark areas are fills like hair/clothing, not drawn lines)
-      - Otherwise → EdgeDetectStrategy (no clear outlines, rely on edge detection)
+    Heuristic (updated with segmentation-aware logic):
+      1. If >2% of pixels are dark AND desaturated → strong black outlines present
+         → use DarkPixelStrategy (fastest, cleanest for pop art with outlines)
+      2. If dark pixels are concentrated in large blobs (fills, not outlines)
+         → use EdgeDetectStrategy (dark areas are fills like hair/clothing)
+      3. If the image has a flat color palette (few distinct colors, like pop art
+         or Matisse-style blocks) → use KMeansSegmentStrategy (guarantees closed
+         contours for flood-fill, ideal for flat-color illustrations)
+      4. Otherwise → XDoGStrategy (best general-purpose line art extraction)
 
     Args:
         img_rgb: Input image as HxWx3 RGB array.
@@ -56,9 +99,6 @@ def select_strategy(img_rgb: np.ndarray, threshold: int = 60):
 
         if surviving_ratio > 0.005:
             # Significant dark mass survives erosion → these are fills, not just outlines.
-            # But there may still be some real outlines mixed in with the fills.
-            # If outline ratio is high enough, dark pixel strategy with fill removal
-            # in cleanup will handle it.
             if outline_ratio > 0.04:
                 return DarkPixelStrategy(threshold=threshold)
             else:
@@ -66,8 +106,19 @@ def select_strategy(img_rgb: np.ndarray, threshold: int = 60):
         else:
             # Dark pixels are thin lines that disappear under erosion → true outlines
             return DarkPixelStrategy(threshold=threshold)
-    else:
-        return EdgeDetectStrategy(method="adaptive")
+
+    # No clear black outlines — check if the image has flat color regions
+    # (pop art, Matisse-style, cartoon) where K-means segmentation excels.
+    color_complexity = _count_distinct_colors(img_rgb)
+
+    if color_complexity < 3.0:
+        # Flat palette — K-means segmentation produces guaranteed closed contours.
+        # Estimate optimal K from the complexity ratio.
+        k = 6 if color_complexity < 2.0 else 10
+        return KMeansSegmentStrategy(k=k)
+
+    # Complex image without outlines — XDoG produces the cleanest line art
+    return XDoGStrategy()
 
 
 # ---------------------------------------------------------------------------
@@ -79,6 +130,8 @@ STRATEGY_MAP = {
     "edge": lambda _: EdgeDetectStrategy(method="adaptive"),
     "canny": lambda _: EdgeDetectStrategy(method="canny"),
     "combined": lambda t: CombinedStrategy(threshold=t),
+    "kmeans": lambda _: KMeansSegmentStrategy(),
+    "xdog": lambda _: XDoGStrategy(),
     "auto": select_strategy,  # called with (img_rgb, threshold)
 }
 
@@ -95,13 +148,15 @@ def convert(
     transparent: bool = False,
     min_size: int = 3000,
     preview: bool = False,
+    max_gap: int = 10,
 ) -> Path:
     """Convert a pop art image into a coloring template PNG.
 
     Args:
         input_path: Path to the input image (JPEG, PNG, WebP, etc.).
         output_path: Path for the output PNG.
-        strategy: Extraction strategy: 'auto', 'dark', 'edge', 'canny', 'combined'.
+        strategy: Extraction strategy: 'auto', 'dark', 'edge', 'canny',
+                  'combined', 'kmeans', 'xdog'.
         threshold: Dark pixel threshold (0-255). Only used by dark/combined/auto.
         close_kernel_size: Morphological close kernel size for gap-sealing.
         min_component_area: Minimum blob area to keep (None = auto-scale).
@@ -110,6 +165,7 @@ def convert(
         transparent: If True, background is transparent (RGBA PNG).
         min_size: Minimum pixel length of the longest output side.
         preview: If True, also save a side-by-side preview image.
+        max_gap: Maximum pixel distance for endpoint gap bridging (0 = disabled).
 
     Returns:
         Path to the saved coloring template PNG.
@@ -146,6 +202,8 @@ def convert(
         close_kernel_size=close_kernel_size,
         min_component_area=min_component_area,
         smooth=smooth,
+        bridge_gaps=max_gap > 0,
+        max_gap=max_gap,
     )
 
     # Stage 4: Save output
