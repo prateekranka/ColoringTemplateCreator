@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "coloring-template-creator"
+version = "0.1.0"
+description = "Convert pop art images into coloring templates for iPad coloring apps"
+requires-python = ">=3.11"
+dependencies = [
+    "opencv-python-headless>=4.8",
+    "Pillow>=10.0",
+    "numpy>=1.24",
+]
+
+[project.scripts]
+coloring-template = "coloring_template.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
