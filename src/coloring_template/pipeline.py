@@ -26,7 +26,8 @@ def select_strategy(img_rgb: np.ndarray, threshold: int = 60):
     Heuristic:
       - If >2% of pixels are dark AND desaturated → strong black outlines present
         → use DarkPixelStrategy (fastest, cleanest for pop art)
-      - If >5% of pixels are dark (but possibly colored) → CombinedStrategy
+      - If dark pixels exist but are concentrated in large blobs (fills, not outlines)
+        → use EdgeDetectStrategy (dark areas are fills like hair/clothing, not drawn lines)
       - Otherwise → EdgeDetectStrategy (no clear outlines, rely on edge detection)
 
     Args:
@@ -42,14 +43,29 @@ def select_strategy(img_rgb: np.ndarray, threshold: int = 60):
     total = gray.size
 
     # True outline pixels: dark AND low saturation
-    outline_ratio = np.sum((gray < 50) & (saturation < 60)) / total
-    # All dark pixels including colored fills
-    dark_ratio = np.sum(gray < threshold) / total
+    outline_mask = (gray < 50) & (saturation < 60)
+    outline_ratio = np.sum(outline_mask) / total
 
     if outline_ratio > 0.02:
-        return DarkPixelStrategy(threshold=threshold)
-    elif dark_ratio > 0.05:
-        return CombinedStrategy(threshold=threshold)
+        # Check if dark pixels form thin outlines or large fills.
+        # Erode the dark mask — outlines disappear, fills survive.
+        dark_binary = (outline_mask.astype(np.uint8) * 255)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
+        eroded = cv2.erode(dark_binary, kernel, iterations=2)
+        surviving_ratio = np.sum(eroded > 0) / total
+
+        if surviving_ratio > 0.005:
+            # Significant dark mass survives erosion → these are fills, not just outlines.
+            # But there may still be some real outlines mixed in with the fills.
+            # If outline ratio is high enough, dark pixel strategy with fill removal
+            # in cleanup will handle it.
+            if outline_ratio > 0.04:
+                return DarkPixelStrategy(threshold=threshold)
+            else:
+                return EdgeDetectStrategy(method="adaptive")
+        else:
+            # Dark pixels are thin lines that disappear under erosion → true outlines
+            return DarkPixelStrategy(threshold=threshold)
     else:
         return EdgeDetectStrategy(method="adaptive")
 

@@ -35,26 +35,31 @@ class EdgeDetectStrategy(BaseStrategy):
     def extract(self, img_rgb: np.ndarray) -> np.ndarray:
         gray = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2GRAY)
 
+        # Heavy bilateral filtering to smooth out brush texture / halftone
+        # while preserving the major color region boundaries.
+        # Apply twice for stronger smoothing on painterly images.
+        smoothed = cv2.bilateralFilter(gray, d=9, sigmaColor=75, sigmaSpace=75)
+        smoothed = cv2.bilateralFilter(smoothed, d=9, sigmaColor=75, sigmaSpace=75)
+
         if self.method == "adaptive":
-            return self._adaptive(gray)
-        return self._canny(gray)
+            return self._adaptive(smoothed)
+        return self._canny(smoothed)
 
     def _adaptive(self, gray: np.ndarray) -> np.ndarray:
-        # blockSize=15, C=4 tuned for illustration-style images with moderate contrast.
-        # ADAPTIVE_THRESH_GAUSSIAN_C weighs nearby pixels by distance, more natural.
+        # blockSize=21 (larger than before) + C=5 to focus on strong boundaries
+        # and ignore subtle texture. Larger block = less sensitive to local noise.
         mask = cv2.adaptiveThreshold(
             gray, 255,
             cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
             cv2.THRESH_BINARY_INV,
-            blockSize=15,
-            C=4,
+            blockSize=21,
+            C=5,
         )
         return mask
 
     def _canny(self, gray: np.ndarray) -> np.ndarray:
-        # Bilateral filter: smooths homogeneous color regions while preserving edges
-        blurred = cv2.bilateralFilter(gray, d=9, sigmaColor=75, sigmaSpace=75)
-        edges = cv2.Canny(blurred, self.canny_low, self.canny_high)
+        # Higher Canny thresholds to only detect strong edges (major shape boundaries)
+        edges = cv2.Canny(gray, self.canny_low, self.canny_high)
         # Dilate to thicken single-pixel Canny edges to a more paintable width
         kernel = np.ones((2, 2), np.uint8)
         thick = cv2.dilate(edges, kernel, iterations=1)
