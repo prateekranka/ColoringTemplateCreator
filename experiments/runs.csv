@@ -1,0 +1,4 @@
+timestamp,image,budget,seed,winner_score,winner_params_json,git_sha
+20260423T190025,examples/popart_woman.png,20,1397458078,0.7532,"{""threshold"": 45, ""saturation_cutoff"": 100, ""close_kernel_size"": 3, ""min_component_area"": 50, ""max_fill_ratio"": 0.03, ""line_thickness"": 0}",23092a595304ab60d12273129f7ea917785d18e4
+20260423T190028,examples/geometric_dog.png,20,1010228427,0.7232,"{""threshold"": 60, ""saturation_cutoff"": 60, ""close_kernel_size"": 7, ""min_component_area"": null, ""max_fill_ratio"": 0.03, ""line_thickness"": 1}",23092a595304ab60d12273129f7ea917785d18e4
+20260423T190032,examples/(4) Instagram.jpg,20,261359193,0.7269,"{""threshold"": 45, ""saturation_cutoff"": 100, ""close_kernel_size"": 3, ""min_component_area"": 200, ""max_fill_ratio"": 0.015, ""line_thickness"": 1}",23092a595304ab60d12273129f7ea917785d18e4

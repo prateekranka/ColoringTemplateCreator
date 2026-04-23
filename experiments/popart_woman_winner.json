@@ -1,0 +1,24 @@
+{
+  "image": "examples/popart_woman.png",
+  "timestamp": "20260423T190025",
+  "seed": 1397458078,
+  "budget": 20,
+  "params": {
+    "threshold": 45,
+    "saturation_cutoff": 100,
+    "close_kernel_size": 3,
+    "min_component_area": 50,
+    "max_fill_ratio": 0.03,
+    "line_thickness": 0
+  },
+  "score": {
+    "total": 0.7531815137366711,
+    "band": 1.0,
+    "fill": 0.1092231717381466,
+    "closed": 0.9444444444444444,
+    "noise": 1.0,
+    "crisp": 0.8698683191324554,
+    "pure": 1.0
+  },
+  "git_sha": "23092a595304ab60d12273129f7ea917785d18e4"
+}

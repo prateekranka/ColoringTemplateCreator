@@ -1,0 +1,24 @@
+{
+  "image": "examples/geometric_dog.png",
+  "timestamp": "20260423T190028",
+  "seed": 1010228427,
+  "budget": 20,
+  "params": {
+    "threshold": 60,
+    "saturation_cutoff": 60,
+    "close_kernel_size": 7,
+    "min_component_area": null,
+    "max_fill_ratio": 0.03,
+    "line_thickness": 1
+  },
+  "score": {
+    "total": 0.7231858461919812,
+    "band": 1.0,
+    "fill": 0.0,
+    "closed": 0.9545454545454546,
+    "noise": 1.0,
+    "crisp": 0.8227675528289025,
+    "pure": 1.0
+  },
+  "git_sha": "23092a595304ab60d12273129f7ea917785d18e4"
+}

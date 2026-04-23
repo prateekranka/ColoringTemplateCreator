@@ -1,0 +1,24 @@
+{
+  "image": "examples/(4) Instagram.jpg",
+  "timestamp": "20260423T190032",
+  "seed": 261359193,
+  "budget": 20,
+  "params": {
+    "threshold": 45,
+    "saturation_cutoff": 100,
+    "close_kernel_size": 3,
+    "min_component_area": 200,
+    "max_fill_ratio": 0.015,
+    "line_thickness": 1
+  },
+  "score": {
+    "total": 0.7268507500416176,
+    "band": 1.0,
+    "fill": 0.0,
+    "closed": 0.9661016949152542,
+    "noise": 1.0,
+    "crisp": 0.8363041105856676,
+    "pure": 1.0
+  },
+  "git_sha": "23092a595304ab60d12273129f7ea917785d18e4"
+}
