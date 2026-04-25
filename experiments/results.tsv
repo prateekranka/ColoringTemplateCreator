@@ -21,3 +21,4 @@ b279cbb	2.75	discard	EdgeDetect C=5->3: too sensitive, more noise, lower scores	
 b279cbb	2.75	discard	EdgeDetect C=5->8: too restrictive, less detail	2026-04-25T09:08:19Z
 b279cbb	2.75	discard	EdgeDetect bilateral sigma 75->50: less smoothing, more noise	2026-04-25T09:08:41Z
 b279cbb	3.125	discard	EdgeDetect bilateral sigma 75->100: marginally worse	2026-04-25T09:09:08Z
+3e9646f	3.125	discard	DarkPixel saturation gate 80->100: no signal of improvement	2026-04-25T09:11:02Z
