@@ -33,3 +33,4 @@ deff365	3.50	keep	Final multi-run baseline confirm: 3 runs (3.50, 4.00, 3.00) av
 a6f1a1e	3.50	keep	cleanup: remove_fills default True->False (4 trials avg 3.50, peak 4.00)	2026-04-25T09:17:52Z
 13e4309	3.25	discard	Mild CLAHE (clipLimit=1.0): no improvement	2026-04-25T09:18:22Z
 37aa8da	3.69	keep	DarkPixel default threshold 60->80 (4 trials avg 3.69)	2026-04-25T09:19:27Z
+77b23c1	3.50	discard	DarkPixel threshold 80->100: too permissive, lost specificity	2026-04-25T09:19:47Z
