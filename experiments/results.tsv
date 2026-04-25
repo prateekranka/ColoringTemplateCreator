@@ -27,3 +27,4 @@ e8651c1	3.75	keep	INTER_LINEAR + threshold upscale (smoother edges, 2 trials bot
 b63a451	3.56	keep	INTER_CUBIC instead of INTER_LINEAR (smoother curves; 4 trials avg 3.56)	2026-04-25T09:13:42Z
 13f57e7	3.00	discard	MORPH_CLOSE iterations=2: thicker lines hurt scores (avg 3.00)	2026-04-25T09:14:46Z
 7e42a51	3.00	discard	close_kernel 3->5 with INTER_CUBIC: lines too thick (avg 3.00)	2026-04-25T09:15:13Z
+8d57bb4	2.875	discard	CLAHE preprocess in EdgeDetect: hurt Instagram (added noise)	2026-04-25T09:15:54Z
