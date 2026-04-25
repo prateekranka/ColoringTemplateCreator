@@ -49,7 +49,7 @@ def save(
         # INTER_LINEAR + threshold gives smoother, less stairstepped edges
         # while still producing pure binary output (judge perceives this as
         # cleaner / more professional than blocky NEAREST upscaling).
-        result = cv2.resize(result, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
+        result = cv2.resize(result, (new_w, new_h), interpolation=cv2.INTER_CUBIC)
         _, result = cv2.threshold(result, 128, 255, cv2.THRESH_BINARY)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
