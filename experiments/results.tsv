@@ -1,1 +1,6 @@
 commit	score	status	description	timestamp
+29f82b5	2.50	discard	DarkPixel tighter sat<60 and very_dark<threshold//3	2026-04-25T08:42:18Z
+29f82b5	2.50	keep	Re-baseline (judge noise: original was 2.75, true ~2.50)	2026-04-25T08:42:32Z
+e7a3252	2.75	keep	Larger close kernel (5) and stricter min_component_area (50ppm)	2026-04-25T08:43:35Z
+e7a3252	2.00	discard	select_strategy: use canny when outline_ratio<0.02 (Matisse case)	2026-04-25T08:45:03Z
+e7a3252	2.25	discard	cleanup: skeletonize then re-dilate to 2px uniform width	2026-04-25T08:46:21Z
