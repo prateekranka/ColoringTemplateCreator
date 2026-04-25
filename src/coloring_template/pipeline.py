@@ -20,7 +20,7 @@ from .output import save, save_preview
 # Auto-strategy selection
 # ---------------------------------------------------------------------------
 
-def select_strategy(img_rgb: np.ndarray, threshold: int = 60):
+def select_strategy(img_rgb: np.ndarray, threshold: int = 80):
     """Analyse image statistics to choose the best extraction strategy.
 
     Decision tree (in order):
@@ -98,7 +98,7 @@ def convert(
     input_path: str | Path,
     output_path: str | Path,
     strategy: str = "auto",
-    threshold: int = 60,
+    threshold: int = 80,
     close_kernel_size: int = 3,
     min_component_area: int | None = None,
     smooth: bool = True,
