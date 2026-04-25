@@ -23,3 +23,4 @@ b279cbb	2.75	discard	EdgeDetect bilateral sigma 75->50: less smoothing, more noi
 b279cbb	3.125	discard	EdgeDetect bilateral sigma 75->100: marginally worse	2026-04-25T09:09:08Z
 3e9646f	3.125	discard	DarkPixel saturation gate 80->100: no signal of improvement	2026-04-25T09:11:02Z
 e8651c1	3.75	keep	INTER_LINEAR + threshold upscale (smoother edges, 2 trials both 3.75)	2026-04-25T09:11:34Z
+4c68f8b	3.125	discard	EdgeDetect dilate by 1px to thicken lines: net negative (avg 3.125)	2026-04-25T09:12:27Z
