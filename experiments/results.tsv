@@ -34,3 +34,4 @@ a6f1a1e	3.50	keep	cleanup: remove_fills default True->False (4 trials avg 3.50, 
 13e4309	3.25	discard	Mild CLAHE (clipLimit=1.0): no improvement	2026-04-25T09:18:22Z
 37aa8da	3.69	keep	DarkPixel default threshold 60->80 (4 trials avg 3.69)	2026-04-25T09:19:27Z
 77b23c1	3.50	discard	DarkPixel threshold 80->100: too permissive, lost specificity	2026-04-25T09:19:47Z
+123fa86	3.625	discard	min_size 3000->3500: comparable to baseline (3.625 vs 3.69)	2026-04-25T09:20:11Z
