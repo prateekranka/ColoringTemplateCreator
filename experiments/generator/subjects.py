@@ -1,0 +1,36 @@
+SUBJECTS = [
+    # Animals
+    "a cat sitting by a window",
+    "a butterfly on a sunflower",
+    "a lion with a flowing mane",
+    "a fox sitting in autumn leaves",
+    "an owl perched on a branch",
+    "a sea turtle swimming through coral",
+    "a horse galloping through a field",
+    "a toucan on a tropical branch",
+    "a dolphin jumping over waves",
+    "a koala hugging a eucalyptus tree",
+    "a panda eating bamboo",
+    "a peacock with feathers spread",
+    "a flamingo standing in shallow water",
+    "a hedgehog among mushrooms",
+    "a bunny in a garden",
+    # People
+    "a mermaid swimming underwater",
+    "a fairy with wings sitting on a flower",
+    "a little girl with an umbrella",
+    "a girl reading a book under a tree",
+    "a princess with a long dress",
+    # Fantasy / scenes
+    "a unicorn in a meadow",
+    "a dragon curled around a treasure chest",
+    "a castle on a hilltop",
+    "a hot air balloon over mountains",
+    "a sailboat on calm water",
+    # Nature / patterns
+    "a rose in full bloom",
+    "a sunflower with large petals",
+    "a mandala flower pattern",
+    "a tree with many leaves",
+    "a butterfly with detailed wing patterns",
+]
