@@ -26,3 +26,4 @@ e8651c1	3.75	keep	INTER_LINEAR + threshold upscale (smoother edges, 2 trials bot
 4c68f8b	3.125	discard	EdgeDetect dilate by 1px to thicken lines: net negative (avg 3.125)	2026-04-25T09:12:27Z
 b63a451	3.56	keep	INTER_CUBIC instead of INTER_LINEAR (smoother curves; 4 trials avg 3.56)	2026-04-25T09:13:42Z
 13f57e7	3.00	discard	MORPH_CLOSE iterations=2: thicker lines hurt scores (avg 3.00)	2026-04-25T09:14:46Z
+7e42a51	3.00	discard	close_kernel 3->5 with INTER_CUBIC: lines too thick (avg 3.00)	2026-04-25T09:15:13Z
