@@ -6,3 +6,4 @@ e7a3252	2.00	discard	select_strategy: use canny when outline_ratio<0.02 (Matisse
 e7a3252	2.25	discard	cleanup: skeletonize then re-dilate to 2px uniform width	2026-04-25T08:46:21Z
 09da87b	2.50	discard	Fill-region contour width 3->2: no measurable change in judge score	2026-04-25T08:57:29Z
 bddaa68	3.50	keep	select_strategy: heavy-fill detection (eroded full-dark>1pct) routes to EdgeDetect	2026-04-25T08:59:02Z
+d3efb3e	3.25	discard	CombinedStrategy when DarkPixel chosen: avg ~3.25 over 3 trials, vs 3.50 baseline	2026-04-25T09:00:57Z
