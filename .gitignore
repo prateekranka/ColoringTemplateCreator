@@ -5,5 +5,4 @@ dist/
 build/
 examples/output/
 experiments/trial_output/
-experiments/generator/output/
 trial_stderr.log
