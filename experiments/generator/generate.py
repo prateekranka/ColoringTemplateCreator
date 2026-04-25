@@ -151,7 +151,11 @@ def generate_svg(subject: str) -> str:
         temperature=GENERATION_PARAMS.get("temperature", 1.0),
         system=SYSTEM_PROMPT,
         messages=[
-            {"role": "user", "content": f"Draw a coloring book page of: {subject}"},
+            {"role": "user", "content": f"""Draw a richly detailed adult coloring book page of: {subject}.
+
+Before producing SVG, briefly plan (in your head, no output): what is the focal subject's pose? What 4–6 background elements surround it? What border motifs frame the page? Then output the SVG.
+
+Pack the page densely — 30+ closed regions, ornamental botanical detail, no large empty patches."""},
         ],
     )
     raw = response.content[0].text if response.content else ""

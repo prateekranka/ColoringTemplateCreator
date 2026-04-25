@@ -1,2 +1,4 @@
 commit	score	status	description	timestamp
 2d200f3	N/A	crash	lowering temperature -> API rejects: temperature deprecated for opus-4-7	2026-04-25T10:25:47Z
+4e256e3	6.50	discard	thinner strokes (6->4, 4->3, 3->2): regressed to 6.50	2026-04-25T10:56:33Z
+9dcddcf	7.00	keep	bolder main outline (sw 6->8)	2026-04-25T10:58:35Z
