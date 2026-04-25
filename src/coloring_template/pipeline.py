@@ -23,12 +23,19 @@ from .output import save, save_preview
 def select_strategy(img_rgb: np.ndarray, threshold: int = 60):
     """Analyse image statistics to choose the best extraction strategy.
 
-    Heuristic:
-      - If >2% of pixels are dark AND desaturated → strong black outlines present
-        → use DarkPixelStrategy (fastest, cleanest for pop art)
-      - If dark pixels exist but are concentrated in large blobs (fills, not outlines)
-        → use EdgeDetectStrategy (dark areas are fills like hair/clothing, not drawn lines)
-      - Otherwise → EdgeDetectStrategy (no clear outlines, rely on edge detection)
+    Decision tree (in order):
+      1. If the image has heavy SOLID DARK FILLS (large painted regions, e.g.
+         multi-panel Instagram posts with hair/clothing rendered solid black),
+         using DarkPixelStrategy would emit those fills as huge blobs even
+         after fill-removal cleanup. Route those images to EdgeDetectStrategy
+         which captures only the boundaries between regions.
+      2. Else if there is enough dark + desaturated mass to be confident the
+         image has hand-drawn black outlines, use DarkPixelStrategy.
+      3. Else fall back to EdgeDetectStrategy (no clear outlines).
+
+    The "heavy fills" test uses the FULL dark mask (gray < 50, regardless of
+    saturation) eroded by 7px ellipse — this captures both pure-black and
+    saturated-dark fills like dark skin tones, deep red lips, navy clothing.
 
     Args:
         img_rgb: Input image as HxWx3 RGB array.
@@ -42,32 +49,36 @@ def select_strategy(img_rgb: np.ndarray, threshold: int = 60):
     saturation = hsv[:, :, 1]
     total = gray.size
 
-    # True outline pixels: dark AND low saturation
+    # ---- 1. Heavy-fill detection (any-saturation dark mass) ----
+    dark_full = (gray < 50).astype(np.uint8) * 255
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
+    eroded_full = cv2.erode(dark_full, kernel, iterations=2)
+    full_fill_ratio = np.sum(eroded_full > 0) / total
+
+    if full_fill_ratio > 0.01:
+        # Substantial solid dark areas (regardless of color) → painted fills
+        # not outlines → edge detection on region boundaries is better.
+        return EdgeDetectStrategy(method="adaptive")
+
+    # ---- 2. True-outline detection (dark AND desaturated) ----
     outline_mask = (gray < 50) & (saturation < 60)
     outline_ratio = np.sum(outline_mask) / total
 
     if outline_ratio > 0.02:
-        # Check if dark pixels form thin outlines or large fills.
-        # Erode the dark mask — outlines disappear, fills survive.
-        dark_binary = (outline_mask.astype(np.uint8) * 255)
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
-        eroded = cv2.erode(dark_binary, kernel, iterations=2)
-        surviving_ratio = np.sum(eroded > 0) / total
+        # Distinguish thin-outline images from those with smaller saturated fills
+        # using the desaturated-only erosion test (preserves earlier behaviour).
+        dark_desat = (outline_mask.astype(np.uint8) * 255)
+        eroded_desat = cv2.erode(dark_desat, kernel, iterations=2)
+        surviving_ratio = np.sum(eroded_desat > 0) / total
 
-        if surviving_ratio > 0.005:
-            # Significant dark mass survives erosion → these are fills, not just outlines.
-            # But there may still be some real outlines mixed in with the fills.
-            # If outline ratio is high enough, dark pixel strategy with fill removal
-            # in cleanup will handle it.
-            if outline_ratio > 0.04:
-                return DarkPixelStrategy(threshold=threshold)
-            else:
-                return EdgeDetectStrategy(method="adaptive")
-        else:
-            # Dark pixels are thin lines that disappear under erosion → true outlines
-            return DarkPixelStrategy(threshold=threshold)
-    else:
-        return EdgeDetectStrategy(method="adaptive")
+        if surviving_ratio > 0.005 and outline_ratio <= 0.04:
+            # Some desaturated fills present and outline mass moderate → edges.
+            return EdgeDetectStrategy(method="adaptive")
+        # Otherwise: bold black outlines dominate → DarkPixel.
+        return DarkPixelStrategy(threshold=threshold)
+
+    # ---- 3. Fallback ----
+    return EdgeDetectStrategy(method="adaptive")
 
 
 # ---------------------------------------------------------------------------
