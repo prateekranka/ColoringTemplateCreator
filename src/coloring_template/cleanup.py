@@ -90,7 +90,7 @@ def clean(
     close_kernel_size: int = 5,
     min_component_area: int | None = None,
     smooth: bool = True,
-    remove_fills: bool = True,
+    remove_fills: bool = False,
     max_fill_ratio: float = 0.02,
 ) -> np.ndarray:
     """Clean a binary extraction mask for use as a coloring template.
