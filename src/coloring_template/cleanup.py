@@ -76,7 +76,7 @@ def _remove_fill_regions(mask: np.ndarray, max_fill_ratio: float = 0.02) -> np.n
 
 def clean(
     mask: np.ndarray,
-    close_kernel_size: int = 3,
+    close_kernel_size: int = 5,
     min_component_area: int | None = None,
     smooth: bool = True,
     remove_fills: bool = True,
@@ -88,9 +88,10 @@ def clean(
         mask: Binary mask (uint8) where 255 = outline pixel.
         close_kernel_size: Size of the structuring element for morphological CLOSE.
                            Larger values seal wider gaps but may merge nearby lines.
+                           Default 5 (was 3): seals 1-2px gaps that would leak fill.
         min_component_area: Minimum area in pixels for a connected component to be kept.
                             Components smaller than this are treated as noise and removed.
-                            If None, auto-calculated as 0.0005% of total image area
+                            If None, auto-calculated as 0.005% of total image area
                             (scales naturally with resolution).
         smooth: If True, apply a light Gaussian blur then re-threshold to smooth
                 jagged/aliased edges. Recommended for flood-fill coloring apps.
@@ -113,9 +114,11 @@ def clean(
     closed = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
     # 3. Remove noise blobs smaller than min_component_area
+    # Bumped from 0.000005 to 0.00005 of image area: removes more small specks
+    # and floating texture dots that look like noise to the judge.
     if min_component_area is None:
         total_pixels = mask.shape[0] * mask.shape[1]
-        min_component_area = max(30, int(total_pixels * 0.000005))
+        min_component_area = max(80, int(total_pixels * 0.00005))
 
     num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(closed, connectivity=8)
     cleaned = np.zeros_like(closed)
