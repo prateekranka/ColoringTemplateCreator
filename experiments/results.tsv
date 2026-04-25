@@ -25,3 +25,4 @@ b279cbb	3.125	discard	EdgeDetect bilateral sigma 75->100: marginally worse	2026-
 e8651c1	3.75	keep	INTER_LINEAR + threshold upscale (smoother edges, 2 trials both 3.75)	2026-04-25T09:11:34Z
 4c68f8b	3.125	discard	EdgeDetect dilate by 1px to thicken lines: net negative (avg 3.125)	2026-04-25T09:12:27Z
 b63a451	3.56	keep	INTER_CUBIC instead of INTER_LINEAR (smoother curves; 4 trials avg 3.56)	2026-04-25T09:13:42Z
+13f57e7	3.00	discard	MORPH_CLOSE iterations=2: thicker lines hurt scores (avg 3.00)	2026-04-25T09:14:46Z
