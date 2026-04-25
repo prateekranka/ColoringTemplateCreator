@@ -4,6 +4,20 @@ commit	score	status	description	timestamp
 e7a3252	2.75	keep	Larger close kernel (5) and stricter min_component_area (50ppm)	2026-04-25T08:43:35Z
 e7a3252	2.00	discard	select_strategy: use canny when outline_ratio<0.02 (Matisse case)	2026-04-25T08:45:03Z
 e7a3252	2.25	discard	cleanup: skeletonize then re-dilate to 2px uniform width	2026-04-25T08:46:21Z
+0d68d88	3.00	keep	Re-filter small components after Gaussian smoothing pass	2026-04-25T08:50:07Z
+09da87b	2.50	keep	Fix close_kernel_size=5 in convert() (was 3, overriding cleanup default)	2026-04-25T08:56:36Z
 09da87b	2.50	discard	Fill-region contour width 3->2: no measurable change in judge score	2026-04-25T08:57:29Z
 bddaa68	3.50	keep	select_strategy: heavy-fill detection (eroded full-dark>1pct) routes to EdgeDetect	2026-04-25T08:59:02Z
 d3efb3e	3.25	discard	CombinedStrategy when DarkPixel chosen: avg ~3.25 over 3 trials, vs 3.50 baseline	2026-04-25T09:00:57Z
+8833039	3.75	keep	Baseline confirm of bddaa68 changes (replication run)	2026-04-25T09:03:13Z
+b279cbb	4.00	keep	close_kernel_size 5->3: preserves detail, 2 trials avg ~3.75	2026-04-25T09:03:52Z
+b279cbb	3.375	discard	MORPH_RECT instead of MORPH_ELLIPSE close kernel: avg 3.375 over 2 trials	2026-04-25T09:04:26Z
+b279cbb	3.375	discard	Disable smooth (Gaussian+rethreshold): avg 3.375 over 2 trials	2026-04-25T09:05:01Z
+b279cbb	2.625	discard	min_size 3000->1500: lower res hurts judge perception	2026-04-25T09:05:42Z
+b279cbb	3.375	discard	min_size 3000->4000: marginally worse, no signal	2026-04-25T09:06:01Z
+b279cbb	3.00	discard	EdgeDetect blockSize 21->31: lost detail across all images	2026-04-25T09:07:21Z
+b279cbb	2.625	discard	EdgeDetect blockSize 21->15: lost regional context, scores dropped	2026-04-25T09:07:38Z
+b279cbb	2.75	discard	EdgeDetect C=5->3: too sensitive, more noise, lower scores	2026-04-25T09:08:01Z
+b279cbb	2.75	discard	EdgeDetect C=5->8: too restrictive, less detail	2026-04-25T09:08:19Z
+b279cbb	2.75	discard	EdgeDetect bilateral sigma 75->50: less smoothing, more noise	2026-04-25T09:08:41Z
+b279cbb	3.125	discard	EdgeDetect bilateral sigma 75->100: marginally worse	2026-04-25T09:09:08Z
