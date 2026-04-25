@@ -32,3 +32,4 @@ deff365	3.50	keep	Final multi-run baseline confirm: 3 runs (3.50, 4.00, 3.00) av
 633a7ab	3.50	keep	Tighter fill-region thresholds (solidity 0.5->0.7, fill_ratio 0.3->0.5)	2026-04-25T09:16:56Z
 a6f1a1e	3.50	keep	cleanup: remove_fills default True->False (4 trials avg 3.50, peak 4.00)	2026-04-25T09:17:52Z
 13e4309	3.25	discard	Mild CLAHE (clipLimit=1.0): no improvement	2026-04-25T09:18:22Z
+37aa8da	3.69	keep	DarkPixel default threshold 60->80 (4 trials avg 3.69)	2026-04-25T09:19:27Z
