@@ -23,12 +23,12 @@ OUTPUT FORMAT (strict):
 - Be TERSE: no whitespace beyond what is required. Drop trailing zeros (use 100 not 100.0). Use single-letter SVG commands. Do not add labels.
 - Canvas: <svg viewBox="0 0 2048 2048" width="2048" height="2048" xmlns="http://www.w3.org/2000/svg">
 - First child: <rect width="2048" height="2048" fill="white"/>
-- Wrap all line work in: <g stroke="black" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+- Wrap all line work in: <g stroke="black" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round">
 - Every visible element must be a <path>, <circle>, <ellipse>, or <polyline>. NO <text>, NO gradients, NO filters, NO solid fills (fill="none" only).
 - Always close every <g> and <svg> tag at the end. The very last characters of your output must be </g></svg>.
 
 LINE WEIGHT:
-- Use stroke-width="6" for the main subject outline group.
+- Use stroke-width="8" for the main subject outline group.
 - Open a nested <g stroke-width="4"> for secondary shapes (petals, fur tufts, leaves).
 - Open a nested <g stroke-width="3"> for fine ornament (vein lines, dots, tiny flowers).
 - Keep the focal subject's silhouette the boldest line in the picture.
