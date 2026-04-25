@@ -27,40 +27,47 @@ OUTPUT FORMAT (strict):
 
 LINE WEIGHT:
 - Use stroke-width="6" for the main outline group (matches a 1.5–2 mm marker on a printed page).
-- For finer interior decoration you may open a nested <g stroke-width="3"> group, but keep the main outline bold.
+- For finer interior decoration open a nested <g stroke-width="3"> group, but keep the main outline bold.
+- For the most delicate accents (eyelashes, tiny dots, vein tips) you may use a nested <g stroke-width="2"> group.
 
 COMPOSITION:
 - The subject and its setting should fill roughly 80% of the canvas; leave a clean white margin (~80px) on all sides.
-- Place the focal subject centered or slightly off-center; build a small scene around it.
+- Place the focal subject large and centered (or slightly off-center) — it should be immediately recognizable from across a room.
+- Build a small scene around it: ground line, sky elements, supporting props, decorative flora.
 - Aim for 5–8% black pixel density when rasterized — bold but not crowded.
 
 REGION DESIGN (this is the most important rule):
-- Provide AT LEAST 15 distinct closed colorable regions. More is better, up to ~30.
+- Provide AT LEAST 20 distinct closed colorable regions. 25–40 is ideal.
 - Every region must be a fully closed path that ends with Z so a flood fill cannot leak out.
 - No region should be smaller than ~40×40 px — children/adults must be able to color it.
 - Subdivide large shapes (a body, a sky, a mane) into multiple sub-regions with internal contour lines, the way professional coloring books break a horse's mane into individual hair strands or a flower into separate petals.
+- Major shapes touch but do not overlap ambiguously — every line should clearly belong to one region's border.
 
-INTERIOR DECORATION (matches Johanna Basford / Dover style):
-- Animals: draw separate eyes (pupil + iris circle), nostrils, mouth/beak, ear interiors, claws/hooves, and 4–8 fur/feather/scale texture lines on the body.
-- Flowers/leaves: draw a center circle, individual petals with one or two vein curves each, and serrated or veined leaf interiors.
-- Skies/water/ground: add 2–4 stylised cloud, wave, or grass-tuft motifs, plus a few small accent stars/flowers/pebbles to fill empty space.
-- Clothing/objects: include buttons, stitching dashes, folds, patterns (dots, stripes, hearts, stars).
+INTERIOR DECORATION (this is what separates a great coloring page from a sketch):
+- Animals: draw separate eyes (pupil dot inside iris circle inside eye almond), nostrils, mouth/beak, ear interiors with inner-ear curve, claws/hooves split into toes, and 6–10 fur/feather/scale texture lines arranged in natural flow direction. Add a cheek blush circle, a chest tuft, and a tail pattern.
+- Flowers/leaves: draw a center circle with a ring of small dots, individual petals each with one or two vein curves and a small highlight notch, and serrated or veined leaf interiors with a central spine plus 3–5 side veins.
+- Skies/water/ground: add 2–4 stylised cloud, wave, or grass-tuft motifs, 3–6 small accent stars or birds, scattered pebbles, and a few tiny background flowers or leaves to fill empty space.
+- Clothing/objects: include buttons, stitching dashes, folds, patterns (dots, stripes, hearts, stars, scallops, checks).
+- Whitespace policy: any quadrant of the canvas that ends up visually empty should receive 1–2 small decorative motifs (a star, a tiny flower, a swirl, a heart) so the whole page feels intentionally designed, not abandoned.
 
 CURVE QUALITY:
 - Use cubic bezier (C/S) curves for all organic shapes — animals, plants, clouds, water. Avoid long straight segments on organic forms.
-- Use L for clearly geometric shapes (roofs, boxes, kites).
+- Use L only for clearly geometric shapes (roofs, boxes, kites, picture frames).
 - Make curves smooth and confident, not jagged. Reuse symmetric paths via mirrored coordinates when appropriate.
+- Avoid repeated tiny zig-zags — they rasterize as illegible black blobs.
 
 FORBIDDEN:
-- No hatching, crosshatching, stippling, or shading dots.
-- No gray, no colored strokes, no fills other than the white background rect.
-- No text, no labels, no signature, no border frame.
+- No hatching, crosshatching, stippling, or shading dots used as shading.
+- No gray strokes, no colored strokes, no fills other than the white background rect.
+- No text, no labels, no signature, no border frame around the page.
 - No tiny spiky shapes that produce illegible black blobs when rasterized.
+- No empty quadrants of canvas — fill or decorate every region of the composition.
 
 STYLE TARGET:
 - Friendly, inviting, slightly whimsical — suitable for ages 6–adult.
-- Clean confident outlines with charming interior detail.
-- Should look like a page from a published coloring book, not a quick sketch."""
+- Clean confident outlines with charming, ornamental interior detail (Johanna Basford "Secret Garden" / Dover Creative Haven aesthetic).
+- The focal subject should have personality (cute eye expression, smile, dynamic pose).
+- The page should look like a professionally published coloring book illustration, not a quick sketch."""
 
 GENERATION_PARAMS = {
     "model": "claude-opus-4-7",
