@@ -67,7 +67,7 @@ def _remove_fill_regions(mask: np.ndarray, max_fill_ratio: float = 0.02) -> np.n
 
         # A solid fill region has high solidity AND high bounding-box fill ratio
         # Thin outlines/lines have low fill ratio even if they span large areas
-        if solidity > 0.5 and fill_ratio > 0.3:
+        if solidity > 0.7 and fill_ratio > 0.5:
             # Replace with just the boundary contour (3px thick)
             result[labels == i] = 0
             cv2.drawContours(result, [cnt], -1, 255, 3)
