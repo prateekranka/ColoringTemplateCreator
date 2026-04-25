@@ -99,7 +99,7 @@ def convert(
     output_path: str | Path,
     strategy: str = "auto",
     threshold: int = 60,
-    close_kernel_size: int = 5,
+    close_kernel_size: int = 3,
     min_component_area: int | None = None,
     smooth: bool = True,
     dpi: int = 300,
