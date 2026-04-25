@@ -5,6 +5,7 @@ Cleans up raw extraction masks by:
   2. Closing small gaps in outlines (morphological CLOSE)
   3. Removing isolated noise blobs below a minimum area
   4. Smoothing jagged edges with a light Gaussian pass + re-threshold
+  5. Re-removing noise blobs that the smoothing pass may have created
 """
 
 import cv2
@@ -74,6 +75,16 @@ def _remove_fill_regions(mask: np.ndarray, max_fill_ratio: float = 0.02) -> np.n
     return result
 
 
+def _remove_small_components(mask: np.ndarray, min_area: int) -> np.ndarray:
+    """Drop connected components smaller than min_area pixels."""
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
+    cleaned = np.zeros_like(mask)
+    for i in range(1, num_labels):
+        if stats[i, cv2.CC_STAT_AREA] >= min_area:
+            cleaned[labels == i] = 255
+    return cleaned
+
+
 def clean(
     mask: np.ndarray,
     close_kernel_size: int = 5,
@@ -114,21 +125,19 @@ def clean(
     closed = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
     # 3. Remove noise blobs smaller than min_component_area
-    # Bumped from 0.000005 to 0.00005 of image area: removes more small specks
-    # and floating texture dots that look like noise to the judge.
     if min_component_area is None:
         total_pixels = mask.shape[0] * mask.shape[1]
         min_component_area = max(80, int(total_pixels * 0.00005))
 
-    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(closed, connectivity=8)
-    cleaned = np.zeros_like(closed)
-    for i in range(1, num_labels):  # label 0 is background
-        if stats[i, cv2.CC_STAT_AREA] >= min_component_area:
-            cleaned[labels == i] = 255
+    cleaned = _remove_small_components(closed, min_component_area)
 
-    # 4. Light Gaussian blur + re-threshold to smooth jagged edges
+    # 4. Light Gaussian blur + re-threshold to smooth jagged edges.
+    #    This can re-introduce tiny artefact components from antialiased
+    #    pixels, so we re-run the size filter immediately after.
     if smooth:
         blurred = cv2.GaussianBlur(cleaned, (3, 3), 0.8)
         _, cleaned = cv2.threshold(blurred, 128, 255, cv2.THRESH_BINARY)
+        # 5. Second-pass component filter to remove smoothing artefacts.
+        cleaned = _remove_small_components(cleaned, min_component_area)
 
     return cleaned
