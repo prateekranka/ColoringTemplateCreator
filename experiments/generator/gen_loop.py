@@ -29,7 +29,7 @@ PROGRAM_MD      = GENERATOR_DIR / "gen_autoresearch.md"
 ALLOWED_WRITE   = (GENERATOR_DIR / "generate.py").resolve()
 
 AGENT_MODEL      = "claude-opus-4-7"
-BASH_TIMEOUT_SEC = 120
+BASH_TIMEOUT_SEC = 300
 MAX_BASH_OUTPUT  = 20_000
 
 BASH_BLOCKLIST = [

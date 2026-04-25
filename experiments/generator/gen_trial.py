@@ -29,7 +29,7 @@ from subjects import SUBJECTS  # noqa: E402
 
 OUTPUT_DIR = Path(__file__).parent / "output"
 GOLD_DIR   = ROOT / "experiments" / "gold_standard"
-N_SAMPLES  = 4
+N_SAMPLES  = 2
 
 
 def parse_args() -> argparse.Namespace:
