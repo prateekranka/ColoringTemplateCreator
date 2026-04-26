@@ -81,7 +81,6 @@ def run_one_iteration(iteration: int, max_iterations: int) -> bool:
         "claude",
         "-p", task,
         "--allowedTools", "Bash,Read,Write",
-        "--permission-mode", "bypassPermissions",
     ]
 
     result = subprocess.run(cmd, cwd=str(ROOT))
