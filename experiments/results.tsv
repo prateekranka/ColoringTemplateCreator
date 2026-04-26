@@ -44,3 +44,4 @@ cbd6876	5.25	keep	Smooth threshold 100->85: bridges gap-pixels with 3+ line neig
 bb7567e	5.25	discard	Smooth threshold 85->75: no improvement vs 5.25 baseline	2026-04-26T20:57:42Z
 82a4aaf	0.50	discard	Bilateral sigmaSpace 75->50: judge failure (stop hook distraction), not a real evaluation	2026-04-26T21:30:00Z
 1733473	4.75	discard	Adaptive threshold C=5->3: more inclusive edge detection, score regressed 5.25->4.75	2026-04-26T22:00:00Z
+ba5fdff	5.25	discard	GaussianBlur kernel (3,3)->(5,5): no improvement vs 5.25 baseline (pre-commit workflow confirmed working)	2026-04-26T23:00:00Z
