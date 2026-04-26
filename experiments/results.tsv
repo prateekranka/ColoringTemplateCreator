@@ -37,3 +37,4 @@ a6f1a1e	3.50	keep	cleanup: remove_fills default True->False (4 trials avg 3.50, 
 123fa86	3.625	discard	min_size 3000->3500: comparable to baseline (3.625 vs 3.69)	2026-04-25T09:20:11Z
 9bab0da	2.875	discard	Single-pass bilateral d=15 sigma=80 (vs double d=9 sigma=75): worse	2026-04-25T09:20:40Z
 25dce00	3.375	discard	Bilateral sigma 75->60: high variance, no signal	2026-04-25T09:21:02Z
+9e43a20	5.00	keep	Smooth threshold 128->100: preserves outline continuity after Gaussian blur (first CC CLI judge run)	2026-04-26T00:00:00Z
