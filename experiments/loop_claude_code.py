@@ -83,7 +83,12 @@ def run_one_iteration(iteration: int, max_iterations: int) -> bool:
         "--allowedTools", "Bash,Read,Write",
     ]
 
-    result = subprocess.run(cmd, cwd=str(ROOT))
+    result = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True)
+    combined = (result.stdout or "") + (result.stderr or "")
+    if result.returncode != 0 and "hit your limit" in combined.lower():
+        return "rate_limited"
+    if result.returncode != 0:
+        print(combined[-2000:], flush=True)  # show tail of output for debugging
     return result.returncode == 0
 
 
@@ -109,10 +114,24 @@ def run_loop(max_iterations: int) -> None:
         print(f"{'='*60}", flush=True)
 
         ok = run_one_iteration(iteration, max_iterations)
-        if not ok:
+        if ok is True:
+            pass  # success, continue
+        elif ok == "rate_limited":
+            # Sleep until the next top-of-hour reset + 60s buffer
+            now = datetime.now(timezone.utc)
+            next_hour = now.replace(minute=0, second=0, microsecond=0)
+            from datetime import timedelta
+            next_hour += timedelta(hours=1)
+            wait = (next_hour - now).total_seconds() + 60
+            wake = next_hour.strftime("%Y-%m-%dT%H:%M:%SZ")
+            print(f"[loop] Rate limited. Sleeping {wait:.0f}s until {wake}...",
+                  flush=True)
+            iteration -= 1  # don't count this as a used iteration
+            time.sleep(wait)
+        else:
             print(f"[loop] claude exited with error on iteration {iteration}. "
-                  "Waiting 10s before retrying...", flush=True)
-            time.sleep(10)
+                  "Waiting 30s before retrying...", flush=True)
+            time.sleep(30)
 
 
 def parse_args() -> argparse.Namespace:
