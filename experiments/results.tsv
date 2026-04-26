@@ -39,3 +39,4 @@ a6f1a1e	3.50	keep	cleanup: remove_fills default True->False (4 trials avg 3.50, 
 25dce00	3.375	discard	Bilateral sigma 75->60: high variance, no signal	2026-04-25T09:21:02Z
 9e43a20	5.00	keep	Smooth threshold 128->100: preserves outline continuity after Gaussian blur (first CC CLI judge run)	2026-04-26T00:00:00Z
 4844fbf	4.75	discard	close_kernel_size 3->5: lines too thick, score regressed vs 5.00 baseline	2026-04-26T14:20:05Z
+1ab4a93	5.00	discard	Bilateral sigmaColor 75->90: no improvement vs 5.00 baseline (stop hook fix: pre-commit required)	2026-04-26T14:50:00Z
