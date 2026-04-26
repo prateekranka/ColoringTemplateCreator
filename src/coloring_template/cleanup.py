@@ -136,7 +136,7 @@ def clean(
     #    pixels, so we re-run the size filter immediately after.
     if smooth:
         blurred = cv2.GaussianBlur(cleaned, (3, 3), 0.8)
-        _, cleaned = cv2.threshold(blurred, 85, 255, cv2.THRESH_BINARY)
+        _, cleaned = cv2.threshold(blurred, 75, 255, cv2.THRESH_BINARY)
         # 5. Second-pass component filter to remove smoothing artefacts.
         cleaned = _remove_small_components(cleaned, min_component_area)
 
