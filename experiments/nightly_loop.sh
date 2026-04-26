@@ -34,7 +34,7 @@ echo "Log       : $LOG"                            | tee -a "$LOG"
 echo "============================================" | tee -a "$LOG"
 
 cd "$ROOT"
-python experiments/loop_claude_code.py --max-turns "$MAX_TURNS" 2>&1 | tee -a "$LOG"
+python experiments/loop_claude_code.py ${MAX_TURNS:+--max-turns "$MAX_TURNS"} 2>&1 | tee -a "$LOG"
 
 echo "============================================" | tee -a "$LOG"
 echo "Finished — $(date)"                          | tee -a "$LOG"

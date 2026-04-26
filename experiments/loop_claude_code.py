@@ -36,6 +36,7 @@ def check_claude_cli() -> None:
 def run_loop(max_turns: int) -> None:
     check_claude_cli()
 
+    trial_limit = f"Run exactly {max_turns} trials then stop." if max_turns else "Run indefinitely."
     task = (
         "Read experiments/autoresearch_250426.md for your full agent instructions.\n\n"
         "Then begin the autoresearch loop exactly as described in that file, with "
@@ -44,19 +45,18 @@ def run_loop(max_turns: int) -> None:
         "command instead of `python experiments/run_trial.py`. This version uses "
         "the Claude Code CLI for judging, so no ANTHROPIC_API_KEY is needed.\n\n"
         "All other instructions in autoresearch_250426.md apply unchanged: git "
-        "workflow, results.tsv format, hard constraints, etc.\n\n"
-        "Run indefinitely. Do NOT pause, ask for input, or wait for confirmation."
+        f"workflow, results.tsv format, hard constraints, etc.\n\n"
+        f"{trial_limit} Do NOT pause, ask for input, or wait for confirmation."
     )
 
     cmd = [
         "claude",
         "-p", task,
         "--allowedTools", "Bash,Read,Write",
+        "--permission-mode", "bypassPermissions",
     ]
-    if max_turns:
-        cmd += ["--max-turns", str(max_turns)]
 
-    label = f"max-turns={max_turns}" if max_turns else "unlimited"
+    label = f"{max_turns} trials" if max_turns else "unlimited"
     print(f"Starting autoresearch via Claude Code CLI ({label})")
     print("Press Ctrl+C to stop.\n", flush=True)
 
