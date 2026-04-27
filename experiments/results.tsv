@@ -50,3 +50,4 @@ aad8845	4.75	discard	Adaptive threshold blockSize 21->31: regressed 5.25->4.75 (
 24ec7d1	4.75	discard	Adaptive threshold blockSize 21->15: regressed 5.25->4.75 (confirms b279cbb blockSize=15 finding)	2026-04-27T07:00:00Z
 b68d303	4.50	discard	Bilateral filter 2 passes->1 pass: score regressed 5.25->4.50 (2-pass confirmed needed)	2026-04-27T07:30:00Z
 5199402	4.75	discard	close_kernel_size 3->4: middle ground regressed 5.25->4.75 (all sizes >3 hurt)	2026-04-27T07:45:00Z
+1496279	0.00	discard	Bilateral sigmaColor 75->100: judge failure (stop hook distraction) — also previously tested at b279cbb with worse result	2026-04-27T07:02:15Z
