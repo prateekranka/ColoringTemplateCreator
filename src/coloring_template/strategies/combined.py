@@ -16,17 +16,21 @@ class CombinedStrategy(BaseStrategy):
     The union of both masks is then passed through a heavier cleanup step.
     """
 
-    def __init__(self, threshold: int = 60):
+    def __init__(self, threshold: int = 60, dark_weight: float = 0.7, edge_weight: float = 0.3):
         """
         Args:
             threshold: Dark pixel threshold passed to DarkPixelStrategy.
+            dark_weight: Weight for the dark pixel mask in the blend.
+            edge_weight: Weight for the edge detection mask in the blend.
         """
+        self.dark_weight = dark_weight
+        self.edge_weight = edge_weight
         self._dark = DarkPixelStrategy(threshold=threshold)
         self._edge = EdgeDetectStrategy(method="adaptive")
 
     def extract(self, img_rgb: np.ndarray) -> np.ndarray:
         mask_dark = self._dark.extract(img_rgb).astype(np.float32) / 255.0
         mask_edge = self._edge.extract(img_rgb).astype(np.float32) / 255.0
-        blended = np.clip(mask_dark * 0.7 + mask_edge * 0.3, 0.0, 1.0)
+        blended = np.clip(mask_dark * self.dark_weight + mask_edge * self.edge_weight, 0.0, 1.0)
         _, combined = cv2.threshold((blended * 255).astype(np.uint8), 127, 255, cv2.THRESH_BINARY)
         return combined
