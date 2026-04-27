@@ -1,8 +1,9 @@
 """Output formatting for coloring templates.
 
-Produces clean PNG files optimized for iPad coloring apps (e.g. Colorflow):
+Produces clean PNG and SVG files optimized for iPad coloring apps (e.g. Colorflow):
   - Black lines on white background (standard mode)
   - Black lines on transparent background (transparent mode, for layered import)
+  - SVG with traced vector paths (save_svg)
   - Minimum 3000px on the longest side at 300 DPI
   - Pure binary pixels only - no anti-aliasing gray values that break flood-fill
 """
@@ -74,6 +75,119 @@ def _save_transparent(gray: np.ndarray, output_path: Path, dpi: int) -> None:
     rgba[~line_pixels] = [255, 255, 255, 0]
     img = Image.fromarray(rgba, mode="RGBA")
     img.save(str(output_path), "PNG", dpi=(dpi, dpi))
+
+
+def save_svg(
+    mask: np.ndarray,
+    output_path: str | Path,
+    min_size: int = 3000,
+) -> Path:
+    """Convert a line mask to an SVG coloring template using contour tracing.
+
+    Each connected outline component becomes a filled <path> element with black fill
+    on a white background. The SVG viewBox matches the pixel dimensions so it scales
+    cleanly to any size.
+
+    Args:
+        mask: Binary mask (uint8) where 255 = outline pixel, 0 = background.
+        output_path: Destination file path (.svg).
+        min_size: Minimum pixel length of the longest side. If the image is smaller,
+                  the mask is upscaled before tracing.
+
+    Returns:
+        Path to the saved SVG file.
+    """
+    output_path = Path(output_path).with_suffix(".svg")
+
+    # Upscale if needed (same logic as save())
+    h, w = mask.shape[:2]
+    longest = max(h, w)
+    if longest < min_size:
+        scale = min_size / longest
+        new_w = int(w * scale)
+        new_h = int(h * scale)
+        mask = cv2.resize(mask, (new_w, new_h), interpolation=cv2.INTER_NEAREST)
+        h, w = new_h, new_w
+
+    contours, _ = cv2.findContours(mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_TC89_KCOS)
+
+    path_data_parts = []
+    for cnt in contours:
+        if len(cnt) < 2:
+            continue
+        pts = cnt.squeeze()
+        if pts.ndim == 1:
+            pts = pts[np.newaxis, :]
+        # Move to first point, then line to each subsequent point, close path
+        d = f"M {pts[0, 0]} {pts[0, 1]}"
+        for pt in pts[1:]:
+            d += f" L {pt[0]} {pt[1]}"
+        d += " Z"
+        path_data_parts.append(d)
+
+    paths_svg = "\n    ".join(
+        f'<path d="{d}" />' for d in path_data_parts
+    )
+
+    # SVG with pan/zoom via viewBox + preserveAspectRatio.
+    # width/height are set to 100% so the SVG fills its container in any
+    # viewer (browser, iPad app) and the viewBox handles the coordinate space.
+    # JS wheel+pointer handlers enable pinch-to-zoom and drag-to-pan when
+    # opened directly in a browser, which is the primary review workflow.
+    svg = f"""\
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 {w} {h}"
+     width="100%" height="100%"
+     preserveAspectRatio="xMidYMid meet"
+     style="display:block;background:white;touch-action:none;">
+  <rect width="{w}" height="{h}" fill="white"/>
+  <g id="art" fill="black" stroke="none">
+    {paths_svg}
+  </g>
+  <script><![CDATA[
+    (function() {{
+      var svg = document.currentScript.closest('svg');
+      var art = svg.getElementById('art');
+      var vx = 0, vy = 0, vw = {w}, vh = {h};
+      var dragging = false, lastX, lastY;
+
+      function setView(x, y, w, h) {{
+        vx = x; vy = y; vw = w; vh = h;
+        svg.setAttribute('viewBox', x + ' ' + y + ' ' + w + ' ' + h);
+      }}
+
+      svg.addEventListener('wheel', function(e) {{
+        e.preventDefault();
+        var rect = svg.getBoundingClientRect();
+        var mx = (e.clientX - rect.left) / rect.width  * vw + vx;
+        var my = (e.clientY - rect.top)  / rect.height * vh + vy;
+        var factor = e.deltaY > 0 ? 1.1 : 0.9;
+        var nw = vw * factor, nh = vh * factor;
+        setView(mx - (mx - vx) * factor, my - (my - vy) * factor, nw, nh);
+      }}, {{ passive: false }});
+
+      svg.addEventListener('pointerdown', function(e) {{
+        dragging = true; lastX = e.clientX; lastY = e.clientY;
+        svg.setPointerCapture(e.pointerId);
+      }});
+      svg.addEventListener('pointermove', function(e) {{
+        if (!dragging) return;
+        var rect = svg.getBoundingClientRect();
+        var dx = (e.clientX - lastX) / rect.width  * vw;
+        var dy = (e.clientY - lastY) / rect.height * vh;
+        setView(vx - dx, vy - dy, vw, vh);
+        lastX = e.clientX; lastY = e.clientY;
+      }});
+      svg.addEventListener('pointerup',   function() {{ dragging = false; }});
+      svg.addEventListener('pointercancel', function() {{ dragging = false; }});
+    }})();
+  ]]></script>
+</svg>
+"""
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(svg, encoding="utf-8")
+    return output_path
 
 
 def save_preview(

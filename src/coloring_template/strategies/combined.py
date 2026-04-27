@@ -25,7 +25,8 @@ class CombinedStrategy(BaseStrategy):
         self._edge = EdgeDetectStrategy(method="adaptive")
 
     def extract(self, img_rgb: np.ndarray) -> np.ndarray:
-        mask_dark = self._dark.extract(img_rgb)
-        mask_edge = self._edge.extract(img_rgb)
-        combined = cv2.bitwise_or(mask_dark, mask_edge)
+        mask_dark = self._dark.extract(img_rgb).astype(np.float32) / 255.0
+        mask_edge = self._edge.extract(img_rgb).astype(np.float32) / 255.0
+        blended = np.clip(mask_dark * 0.7 + mask_edge * 0.3, 0.0, 1.0)
+        _, combined = cv2.threshold((blended * 255).astype(np.uint8), 127, 255, cv2.THRESH_BINARY)
         return combined

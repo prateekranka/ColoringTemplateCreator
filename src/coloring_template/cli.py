@@ -113,6 +113,11 @@ def build_parser() -> argparse.ArgumentParser:
         dest="smooth",
         help="Disable edge smoothing (keep raw binary edges).",
     )
+    parser.add_argument(
+        "--svg",
+        action="store_true",
+        help="Output as SVG with traced vector paths (black lines on white background).",
+    )
 
     return parser
 
@@ -154,6 +159,7 @@ def main(argv: list[str] | None = None) -> int:
         transparent=args.transparent,
         min_size=args.min_size,
         preview=args.preview,
+        svg=args.svg,
     )
 
     if len(inputs) == 1:
