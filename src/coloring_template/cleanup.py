@@ -332,7 +332,7 @@ def clean(
     # 5. Light Gaussian blur + re-threshold to smooth jagged edges
     if smooth:
         blurred = cv2.GaussianBlur(cleaned, (3, 3), 0.8)
-        _, cleaned = cv2.threshold(blurred, 128, 255, cv2.THRESH_BINARY)
+        _, cleaned = cv2.threshold(blurred, 85, 255, cv2.THRESH_BINARY)
 
     # 6. Add page border so edge-touching regions become enclosed/colorable.
     # A 2px border around the image ensures flood-fill from the border can't
