@@ -15,7 +15,7 @@ class DarkPixelStrategy(BaseStrategy):
     from dark-colored fills like deep navy or dark purple (high saturation, low value).
     """
 
-    def __init__(self, threshold: int = 40, saturation_gate: bool = True,
+    def __init__(self, threshold: int = 80, saturation_gate: bool = True,
                  saturation_threshold: int = 80, very_dark_divisor: int = 2):
         self.threshold = threshold
         self.saturation_gate = saturation_gate
