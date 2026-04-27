@@ -20,7 +20,7 @@ class EdgeDetectStrategy(BaseStrategy):
     def __init__(self, method: str = "adaptive", canny_low: int = 30, canny_high: int = 100,
                  bilateral_d: int = 9, bilateral_sigmaColor: int = 75,
                  bilateral_sigmaSpace: int = 75, bilateral_passes: int = 4,
-                 adaptive_blockSize: int = 41, adaptive_C: int = 6,
+                 adaptive_blockSize: int = 21, adaptive_C: int = 6,
                  lab_d: int = 9, lab_sigmaColor: int = 75, lab_sigmaSpace: int = 75,
                  lab_passes: int = 2, lab_init_thresh: int = 60,
                  lab_high_thresh: int = 120, lab_edge_ratio: float = 0.10,
