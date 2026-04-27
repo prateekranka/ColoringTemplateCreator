@@ -254,7 +254,7 @@ def clean(
     smooth: bool = True,
     remove_fills: bool = True,
     max_fill_ratio: float = 0.002,
-    gap_close: bool = True,
+    gap_close: bool = False,
     max_gap_radius: int = 500,
     fill_holes: bool = True,
     max_hole_area: int | None = None,
