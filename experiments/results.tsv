@@ -48,3 +48,4 @@ ba5fdff	5.25	discard	GaussianBlur kernel (3,3)->(5,5): no improvement vs 5.25 ba
 8b71118	5.25	discard	GaussianBlur sigma 0.8->1.5: no improvement vs 5.25 baseline	2026-04-26T23:30:00Z
 aad8845	4.75	discard	Adaptive threshold blockSize 21->31: regressed 5.25->4.75 (also confirmed by earlier b279cbb trial)	2026-04-27T06:30:42Z
 24ec7d1	4.75	discard	Adaptive threshold blockSize 21->15: regressed 5.25->4.75 (confirms b279cbb blockSize=15 finding)	2026-04-27T07:00:00Z
+b68d303	4.50	discard	Bilateral filter 2 passes->1 pass: score regressed 5.25->4.50 (2-pass confirmed needed)	2026-04-27T07:30:00Z
