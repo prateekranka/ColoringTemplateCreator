@@ -15,17 +15,12 @@ class DarkPixelStrategy(BaseStrategy):
     from dark-colored fills like deep navy or dark purple (high saturation, low value).
     """
 
-    def __init__(self, threshold: int = 60, saturation_gate: bool = True):
-        """
-        Args:
-            threshold: Grayscale threshold 0-255. Pixels below this are considered
-                       outline candidates. Default 60 works well for bold black outlines.
-                       Lower values = stricter (only boldest lines); higher = more inclusive.
-            saturation_gate: If True, uses HSV saturation to reject dark-but-colored pixels
-                             so dark blue/purple fills don't become part of the outline.
-        """
+    def __init__(self, threshold: int = 60, saturation_gate: bool = True,
+                 saturation_threshold: int = 80, very_dark_divisor: int = 2):
         self.threshold = threshold
         self.saturation_gate = saturation_gate
+        self.saturation_threshold = saturation_threshold
+        self.very_dark_divisor = very_dark_divisor
 
     def extract(self, img_rgb: np.ndarray) -> np.ndarray:
         gray = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2GRAY)
@@ -37,11 +32,8 @@ class DarkPixelStrategy(BaseStrategy):
         hsv = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2HSV)
         saturation = hsv[:, :, 1]
 
-        # True black outlines: low brightness AND low saturation
-        dark_and_desaturated = (gray < self.threshold) & (saturation < 80)
-
-        # Very dark pixels are outline regardless of saturation (e.g. near-pure-black)
-        very_dark = gray < (self.threshold // 2)
+        dark_and_desaturated = (gray < self.threshold) & (saturation < self.saturation_threshold)
+        very_dark = gray < (self.threshold // self.very_dark_divisor)
 
         mask = np.where(dark_and_desaturated | very_dark, 255, 0).astype(np.uint8)
         return mask

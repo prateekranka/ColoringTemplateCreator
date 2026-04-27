@@ -13,42 +13,54 @@ class EdgeDetectStrategy(BaseStrategy):
     or illustrations drawn on colored paper). Two methods are available:
 
     - 'adaptive': Adaptive thresholding - handles varying lighting/contrast and
-                  naturally captures the full width of existing outlines. Best for
-                  most illustration-style images.
-    - 'canny': Canny edge detection with bilateral pre-filter - better at finding
-               faint edges but produces thinner single-pixel lines. Good for photos.
+                  naturally captures the full width of existing outlines.
+    - 'canny': Canny edge detection with bilateral pre-filter.
     """
 
-    def __init__(self, method: str = "adaptive", canny_low: int = 30, canny_high: int = 100):
-        """
-        Args:
-            method: 'adaptive' or 'canny'.
-            canny_low: Lower threshold for Canny hysteresis (used if method='canny').
-            canny_high: Upper threshold for Canny hysteresis (used if method='canny').
-        """
+    def __init__(self, method: str = "adaptive", canny_low: int = 30, canny_high: int = 100,
+                 bilateral_d: int = 9, bilateral_sigmaColor: int = 75,
+                 bilateral_sigmaSpace: int = 75, bilateral_passes: int = 4,
+                 adaptive_blockSize: int = 41, adaptive_C: int = 6,
+                 lab_d: int = 9, lab_sigmaColor: int = 75, lab_sigmaSpace: int = 75,
+                 lab_passes: int = 2, lab_init_thresh: int = 60,
+                 lab_high_thresh: int = 120, lab_edge_ratio: float = 0.10,
+                 lab_fallback_ratio: float = 0.15):
         if method not in ("adaptive", "canny"):
             raise ValueError(f"method must be 'adaptive' or 'canny', got {method!r}")
         self.method = method
         self.canny_low = canny_low
         self.canny_high = canny_high
+        self.bilateral_d = bilateral_d
+        self.bilateral_sigmaColor = bilateral_sigmaColor
+        self.bilateral_sigmaSpace = bilateral_sigmaSpace
+        self.bilateral_passes = bilateral_passes
+        self.adaptive_blockSize = adaptive_blockSize
+        self.adaptive_C = adaptive_C
+        self.lab_d = lab_d
+        self.lab_sigmaColor = lab_sigmaColor
+        self.lab_sigmaSpace = lab_sigmaSpace
+        self.lab_passes = lab_passes
+        self.lab_init_thresh = lab_init_thresh
+        self.lab_high_thresh = lab_high_thresh
+        self.lab_edge_ratio = lab_edge_ratio
+        self.lab_fallback_ratio = lab_fallback_ratio
 
     def extract(self, img_rgb: np.ndarray) -> np.ndarray:
         gray = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2GRAY)
 
-        # Heavy bilateral filtering to smooth out brush texture / halftone
-        # while preserving the major color region boundaries.
-        # Apply four times for stronger smoothing on geometric/painterly images.
-        smoothed = cv2.bilateralFilter(gray, d=9, sigmaColor=75, sigmaSpace=75)
-        smoothed = cv2.bilateralFilter(smoothed, d=9, sigmaColor=75, sigmaSpace=75)
-        smoothed = cv2.bilateralFilter(smoothed, d=9, sigmaColor=75, sigmaSpace=75)
-        smoothed = cv2.bilateralFilter(smoothed, d=9, sigmaColor=75, sigmaSpace=75)
+        smoothed = gray
+        for _ in range(self.bilateral_passes):
+            smoothed = cv2.bilateralFilter(
+                smoothed, d=self.bilateral_d,
+                sigmaColor=self.bilateral_sigmaColor,
+                sigmaSpace=self.bilateral_sigmaSpace
+            )
 
         if self.method == "adaptive":
             grayscale_mask = self._adaptive(smoothed)
         else:
             grayscale_mask = self._canny(smoothed)
 
-        # Detect color boundaries invisible in grayscale using LAB color space
         color_edges = self._lab_color_edges(img_rgb)
         if color_edges is not None:
             grayscale_mask = cv2.bitwise_or(grayscale_mask, color_edges)
@@ -56,31 +68,19 @@ class EdgeDetectStrategy(BaseStrategy):
         return grayscale_mask
 
     def _lab_color_edges(self, img_rgb: np.ndarray) -> np.ndarray | None:
-        """Detect edges from color boundaries using LAB color space.
-
-        Adjacent regions with different hues but similar luminance are invisible
-        in grayscale. LAB A and B channels encode color information independent
-        of lightness, so gradients in these channels reveal color boundaries.
-
-        Returns:
-            Binary mask of color edges, or None if no significant color edges found.
-        """
-        # Convert to LAB
         img_lab = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2LAB)
 
-        # Bilateral filter on each LAB channel to smooth texture while
-        # preserving color region boundaries
         lab_smoothed = np.zeros_like(img_lab)
         for i in range(3):
-            lab_smoothed[:, :, i] = cv2.bilateralFilter(
-                img_lab[:, :, i], d=9, sigmaColor=75, sigmaSpace=75
-            )
-            lab_smoothed[:, :, i] = cv2.bilateralFilter(
-                lab_smoothed[:, :, i], d=9, sigmaColor=75, sigmaSpace=75
-            )
+            ch = img_lab[:, :, i]
+            for _ in range(self.lab_passes):
+                ch = cv2.bilateralFilter(
+                    ch, d=self.lab_d,
+                    sigmaColor=self.lab_sigmaColor,
+                    sigmaSpace=self.lab_sigmaSpace
+                )
+            lab_smoothed[:, :, i] = ch
 
-        # Compute gradient magnitude on A and B channels (color channels)
-        # using Scharr operator for better rotational symmetry
         a_channel = lab_smoothed[:, :, 1].astype(np.float32)
         b_channel = lab_smoothed[:, :, 2].astype(np.float32)
 
@@ -92,28 +92,21 @@ class EdgeDetectStrategy(BaseStrategy):
         b_grad_y = cv2.Scharr(b_channel, cv2.CV_32F, 0, 1)
         b_mag = np.sqrt(b_grad_x**2 + b_grad_y**2)
 
-        # Combine: max of A and B gradient magnitudes
         color_mag = np.maximum(a_mag, b_mag)
 
-        # Normalize to 0-255
         max_val = color_mag.max()
         if max_val < 1.0:
-            return None  # No significant color variation
+            return None
         color_mag = (color_mag / max_val * 255).astype(np.uint8)
 
-        # Threshold: only keep strong color boundaries
-        # Use a high threshold to avoid picking up subtle gradients
-        _, color_edges = cv2.threshold(color_mag, 60, 255, cv2.THRESH_BINARY)
+        _, color_edges = cv2.threshold(color_mag, self.lab_init_thresh, 255, cv2.THRESH_BINARY)
 
-        # Check if the color edges are meaningful (not just noise)
         edge_ratio = np.sum(color_edges > 0) / color_edges.size
-        if edge_ratio > 0.10:
-            # Too many edges = probably noise/texture, not real boundaries
-            # Raise threshold aggressively
-            _, color_edges = cv2.threshold(color_mag, 120, 255, cv2.THRESH_BINARY)
+        if edge_ratio > self.lab_edge_ratio:
+            _, color_edges = cv2.threshold(color_mag, self.lab_high_thresh, 255, cv2.THRESH_BINARY)
             edge_ratio = np.sum(color_edges > 0) / color_edges.size
-            if edge_ratio > 0.10:
-                return None  # Still too noisy, skip color edges entirely
+            if edge_ratio > self.lab_fallback_ratio:
+                return None
 
         return color_edges
 
@@ -122,15 +115,13 @@ class EdgeDetectStrategy(BaseStrategy):
             gray, 255,
             cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
             cv2.THRESH_BINARY_INV,
-            blockSize=41,
-            C=6,
+            blockSize=self.adaptive_blockSize,
+            C=self.adaptive_C,
         )
         return mask
 
     def _canny(self, gray: np.ndarray) -> np.ndarray:
-        # Higher Canny thresholds to only detect strong edges (major shape boundaries)
         edges = cv2.Canny(gray, self.canny_low, self.canny_high)
-        # Dilate to thicken single-pixel Canny edges to a more paintable width
         kernel = np.ones((2, 2), np.uint8)
         thick = cv2.dilate(edges, kernel, iterations=1)
         return thick
