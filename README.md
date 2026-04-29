@@ -47,6 +47,17 @@ python -m coloring_template --generate "a fox sitting in autumn leaves"
 # Saves PNG, SVG, and validation JSON into ./output
 ```
 
+### Generate with the OpenAI Image API
+```bash
+export OPENAI_API_KEY=...
+python -m coloring_template --generate "a cute baby dragon in a garden" \
+  --generate-provider openai-image \
+  --model gpt-image-2 \
+  --image-size 1024x1536 \
+  --image-quality medium
+# Saves raw model output plus cleaned pure black/white template into ./output
+```
+
 ### Transparent background (for layered import into Colorflow)
 ```bash
 python -m coloring_template art.png --transparent
@@ -66,8 +77,11 @@ python -m coloring_template art.png --transparent
 | `--close-kernel` | `3` | Morphological close kernel size (gap sealing) |
 | `--no-smooth` | off | Disable edge smoothing |
 | `--generate SUBJECT` | off | Generate a vector-first coloring page from a text prompt |
+| `--generate-provider` | `svg` | Use `svg` or `openai-image` generation backend |
 | `--max-attempts` | `3` | Generation repair attempts |
 | `--model` | env/default | Model override for generation |
+| `--image-size` | `1024x1536` | OpenAI Image API output size |
+| `--image-quality` | `medium` | OpenAI Image API quality |
 
 ## Strategies
 

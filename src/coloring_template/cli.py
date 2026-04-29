@@ -148,6 +148,41 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="N",
         help="Token budget for SVG generation in --generate mode (default: 8192).",
     )
+    parser.add_argument(
+        "--generate-provider",
+        choices=["svg", "openai-image"],
+        default="svg",
+        help=(
+            "Generation backend for --generate mode. 'svg' uses the vector LLM "
+            "provider; 'openai-image' uses the OpenAI Image API."
+        ),
+    )
+    parser.add_argument(
+        "--image-size",
+        default="1024x1536",
+        metavar="SIZE",
+        help="Image API size for --generate-provider openai-image (default: 1024x1536).",
+    )
+    parser.add_argument(
+        "--image-quality",
+        default="medium",
+        choices=["low", "medium", "high", "auto"],
+        help="Image API quality for --generate-provider openai-image (default: medium).",
+    )
+    parser.add_argument(
+        "--image-background",
+        default="opaque",
+        choices=["opaque", "transparent", "auto"],
+        help="Image API background mode for openai-image (default: opaque).",
+    )
+    parser.add_argument(
+        "--raster-threshold",
+        type=int,
+        default=210,
+        metavar="N",
+        dest="raster_threshold",
+        help="Binarization threshold for generated raster cleanup (default: 210).",
+    )
 
     return parser
 
@@ -185,20 +220,37 @@ def main(argv: list[str] | None = None) -> int:
         if args.max_attempts < 1:
             parser.error("--max-attempts must be at least 1")
 
-        from .generator import generate_template
-
         output_dir.mkdir(parents=True, exist_ok=True)
         stem = "_".join(args.generate.lower().split())[:80] or "generated"
         safe_stem = "".join(ch if ch.isalnum() or ch in "-_" else "_" for ch in stem)
         out_path = output_dir / f"{safe_stem}_coloring.png"
         try:
-            result_path, report = generate_template(
-                args.generate,
-                out_path,
-                max_attempts=args.max_attempts,
-                model=args.model,
-                max_tokens=args.max_tokens,
-            )
+            if args.generate_provider == "openai-image":
+                from .generator import generate_openai_image_template
+
+                result_path, report = generate_openai_image_template(
+                    args.generate,
+                    out_path,
+                    model=args.model,
+                    size=args.image_size,
+                    quality=args.image_quality,
+                    background=args.image_background,
+                    threshold=args.raster_threshold,
+                    transparent=args.transparent,
+                    min_size=args.min_size,
+                    dpi=args.dpi,
+                    svg=args.svg,
+                )
+            else:
+                from .generator import generate_template
+
+                result_path, report = generate_template(
+                    args.generate,
+                    out_path,
+                    max_attempts=args.max_attempts,
+                    model=args.model,
+                    max_tokens=args.max_tokens,
+                )
             status = "passed" if report.ok else "needs review"
             print(f"Saved: {result_path}")
             print(

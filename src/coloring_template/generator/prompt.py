@@ -53,3 +53,41 @@ def user_prompt(subject: str, feedback: list[str] | None = None) -> str:
         prompt.append("The previous candidate failed validation. Fix these issues:")
         prompt.extend(f"- {item}" for item in feedback)
     return "\n".join(prompt)
+
+
+def image_prompt(
+    subject: str,
+    *,
+    audience: str = "kids ages 5-8",
+    difficulty: str = "simple",
+) -> str:
+    """Build a prompt for raster image generation models."""
+    return f"""Create a {difficulty} black-and-white coloring book template of {subject}.
+
+Audience: {audience}.
+
+Style requirements:
+- pure black outlines on pure white background
+- no color
+- no shading
+- no grayscale
+- no gradients
+- no shadows
+- no filled black areas
+- clean vector-like line art
+- bold smooth outlines
+- closed shapes suitable for digital tap-to-fill coloring
+- printable coloring page
+
+Composition:
+- centered subject
+- large enclosed coloring regions
+- minimal tiny details
+- no text, letters, watermark, or signature
+
+Avoid:
+- tiny clutter
+- realistic texture
+- hatching or crosshatching
+- gray pencil sketch marks
+- copyrighted characters or named living artist styles"""
