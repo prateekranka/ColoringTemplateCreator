@@ -40,6 +40,13 @@ python -m coloring_template art.png --preview
 # Also saves: ./output/art_preview.png
 ```
 
+### Generate a new coloring template from a prompt
+```bash
+export ANTHROPIC_API_KEY=...
+python -m coloring_template --generate "a fox sitting in autumn leaves"
+# Saves PNG, SVG, and validation JSON into ./output
+```
+
 ### Transparent background (for layered import into Colorflow)
 ```bash
 python -m coloring_template art.png --transparent
@@ -58,6 +65,9 @@ python -m coloring_template art.png --transparent
 | `--preview` | off | Save side-by-side comparison image |
 | `--close-kernel` | `3` | Morphological close kernel size (gap sealing) |
 | `--no-smooth` | off | Disable edge smoothing |
+| `--generate SUBJECT` | off | Generate a vector-first coloring page from a text prompt |
+| `--max-attempts` | `3` | Generation repair attempts |
+| `--model` | env/default | Model override for generation |
 
 ## Strategies
 

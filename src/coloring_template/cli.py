@@ -38,9 +38,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     parser.add_argument(
         "input",
-        nargs="+",
+        nargs="*",
         metavar="INPUT",
         help="Input image file(s). Accepts paths and glob patterns.",
+    )
+    parser.add_argument(
+        "--generate",
+        metavar="SUBJECT",
+        help=(
+            "Generate a new vector-first coloring template from a subject prompt "
+            "instead of extracting outlines from an input image."
+        ),
     )
     parser.add_argument(
         "-o", "--output-dir",
@@ -118,6 +126,28 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Output as SVG with traced vector paths (black lines on white background).",
     )
+    parser.add_argument(
+        "--max-attempts",
+        type=int,
+        default=3,
+        metavar="N",
+        help="Generation repair attempts for --generate mode (default: 3).",
+    )
+    parser.add_argument(
+        "--model",
+        metavar="MODEL",
+        help=(
+            "Model override for --generate mode. Defaults to COLORING_TEMPLATE_MODEL "
+            "or the package default."
+        ),
+    )
+    parser.add_argument(
+        "--max-tokens",
+        type=int,
+        default=8192,
+        metavar="N",
+        help="Token budget for SVG generation in --generate mode (default: 8192).",
+    )
 
     return parser
 
@@ -147,8 +177,50 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    inputs = resolve_inputs(args.input)
     output_dir = Path(args.output_dir)
+
+    if args.generate:
+        if args.input:
+            parser.error("--generate cannot be combined with input image paths")
+        if args.max_attempts < 1:
+            parser.error("--max-attempts must be at least 1")
+
+        from .generator import generate_template
+
+        output_dir.mkdir(parents=True, exist_ok=True)
+        stem = "_".join(args.generate.lower().split())[:80] or "generated"
+        safe_stem = "".join(ch if ch.isalnum() or ch in "-_" else "_" for ch in stem)
+        out_path = output_dir / f"{safe_stem}_coloring.png"
+        try:
+            result_path, report = generate_template(
+                args.generate,
+                out_path,
+                max_attempts=args.max_attempts,
+                model=args.model,
+                max_tokens=args.max_tokens,
+            )
+            status = "passed" if report.ok else "needs review"
+            print(f"Saved: {result_path}")
+            print(
+                "Validation: "
+                f"{status}; density={report.black_density:.1%}, "
+                f"regions={report.enclosed_regions}, "
+                f"tiny_regions={report.tiny_regions}, "
+                f"components={report.component_count}"
+            )
+            if report.feedback:
+                print("Feedback:")
+                for item in report.feedback:
+                    print(f"  - {item}")
+            return 0 if report.ok else 2
+        except Exception as exc:
+            print(f"Error generating template: {exc}", file=sys.stderr)
+            return 1
+
+    if not args.input:
+        parser.error("provide input image path(s), or use --generate SUBJECT")
+
+    inputs = resolve_inputs(args.input)
 
     common_kwargs = dict(
         strategy=args.strategy,
